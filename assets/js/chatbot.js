@@ -1,5 +1,5 @@
 // ============================================
-// PROFESSIONAL COLLEGE CHATBOT
+// GANGARAMPUR COLLEGE CHATBOT - FULLY FIXED
 // ============================================
 
 class CollegeVirtualAssistant {
@@ -23,6 +23,8 @@ class CollegeVirtualAssistant {
         // Initialize
         this.initializeEventListeners();
         this.showWelcomeMessage();
+
+        console.log('✅ Gangarampur College Chatbot Initialized Successfully');
     }
 
     // ============================================
@@ -74,7 +76,7 @@ class CollegeVirtualAssistant {
         // Hide notification
         this.notificationBadge.style.display = 'none';
 
-        // Focus input
+        // Focus input after animation
         setTimeout(() => {
             this.messageInput.focus();
         }, 400);
@@ -104,38 +106,61 @@ class CollegeVirtualAssistant {
             return;
         }
 
-        // Clear input
+        // Clear input immediately
         this.messageInput.value = '';
 
         // Add user message to chat
         this.addMessage(message, 'user');
 
-        // Show processing state
+        // Show typing indicator
         this.showTypingIndicator();
         this.isProcessing = true;
         this.sendButton.disabled = true;
 
         try {
-            // API Call
-            const response = await this.sendToServer(message);
+            // Make API call
+            const data = await this.sendToServer(message);
 
             // Hide typing indicator
             this.hideTypingIndicator();
 
             // Add bot response
-            if (response && response.response) {
-                this.addMessage(response.response, 'bot');
+            if (data && data.response) {
+                // Check if response contains error
+                if (data.status === 'error') {
+                    console.warn('Server returned error:', data.error);
+                }
+                this.addMessage(data.response, 'bot');
                 this.conversationCount++;
+            } else {
+                // No response received
+                this.addMessage(
+                    "I received your message but I'm not sure how to respond. Could you try asking differently?",
+                    'bot'
+                );
             }
 
         } catch (error) {
-            console.error('Chat Error:', error);
+            // Hide typing indicator
             this.hideTypingIndicator();
+
+            // Log the error for debugging
+            console.error('Chat Error Details:', error);
+
+            // Show user-friendly error message
             this.addMessage(
-                'I apologize, but I am experiencing technical difficulties at the moment. Please try again later or contact the administration office for immediate assistance.',
+                "I'm having trouble connecting to the server right now. 😕\n\n" +
+                "Please check:\n" +
+                "• Your internet connection is working\n" +
+                "• The XAMPP server is running (Apache & MySQL)\n\n" +
+                "Try refreshing the page or contact Gangarampur College:\n" +
+                "📞 35212 91074\n" +
+                "📧 ticgmpcollege@gmail.com",
                 'bot'
             );
+
         } finally {
+            // Reset state
             this.isProcessing = false;
             this.sendButton.disabled = false;
             this.messageInput.focus();
@@ -146,23 +171,39 @@ class CollegeVirtualAssistant {
     // API COMMUNICATION
     // ============================================
     async sendToServer(message) {
-        const response = await fetch('api/chat.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-                message: message,
-                timestamp: new Date().toISOString()
-            })
-        });
+        console.log('📤 Sending message:', message);
 
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
+        try {
+            const response = await fetch('api/chat.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: message
+                })
+            });
+
+            console.log('📡 Response status:', response.status);
+
+            // Check if response is OK
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ Server error response:', errorText);
+                throw new Error(`Server returned ${response.status}: ${errorText}`);
+            }
+
+            // Parse JSON
+            const data = await response.json();
+            console.log('📥 Received data:', data);
+
+            return data;
+
+        } catch (error) {
+            console.error('❌ Fetch error:', error);
+            throw error;
         }
-
-        return await response.json();
     }
 
     // ============================================
@@ -175,12 +216,16 @@ class CollegeVirtualAssistant {
         // Avatar
         const avatar = document.createElement('div');
         avatar.className = 'message-avatar-small';
-        avatar.innerHTML = type === 'bot' ? '<i class="fas fa-robot"></i>' : '<i class="fas fa-user"></i>';
+        avatar.innerHTML = type === 'bot'
+            ? '<i class="fas fa-robot"></i>'
+            : '<i class="fas fa-user-graduate"></i>';
 
         // Message bubble
         const bubble = document.createElement('div');
         bubble.className = 'message-bubble';
-        bubble.textContent = content;
+
+        // Support newlines in messages
+        bubble.innerHTML = content.replace(/\n/g, '<br>');
 
         // Timestamp
         const time = document.createElement('span');
@@ -188,7 +233,7 @@ class CollegeVirtualAssistant {
         time.textContent = this.getCurrentTime();
         bubble.appendChild(time);
 
-        // Append
+        // Append elements
         if (type === 'bot') {
             messageWrapper.appendChild(avatar);
             messageWrapper.appendChild(bubble);
@@ -218,13 +263,15 @@ class CollegeVirtualAssistant {
     // ============================================
     showWelcomeMessage() {
         const welcomeMessage =
-            'Hello! I am your College Virtual Assistant. I can help you with information about:\n\n' +
+            '👋 Welcome to Gangarampur College Virtual Assistant!\n\n' +
+            'I can help you with information about:\n\n' +
             '📚 Courses & Admissions\n' +
-            '🏛️ Departments & Faculty\n' +
+            '🏛️ Departments & Subjects\n' +
             '💰 Fees & Scholarships\n' +
-            '🏠 Hostel & Facilities\n' +
-            '📅 Events & Notices\n' +
-            '🎓 Placements & Results\n\n' +
+            '🏠 College Facilities\n' +
+            '📅 Events & Activities\n' +
+            '📢 Notices & Announcements\n' +
+            '📞 Contact & Location\n\n' +
             'How may I assist you today?';
 
         this.addMessage(welcomeMessage, 'bot');
@@ -241,7 +288,9 @@ class CollegeVirtualAssistant {
 
     scrollToBottom() {
         setTimeout(() => {
-            this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+            if (this.messagesContainer) {
+                this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+            }
         }, 100);
     }
 
@@ -252,41 +301,44 @@ class CollegeVirtualAssistant {
 
             // Clear server history
             try {
-                await fetch('api/clear-chat.php');
+                const response = await fetch('api/clear-chat.php');
+                console.log('Clear chat response:', response.status);
             } catch (error) {
                 console.error('Clear Error:', error);
             }
 
-            // Reset and show welcome
+            // Reset counter and show welcome
             this.conversationCount = 0;
             this.showWelcomeMessage();
 
             // Show notification
-            this.showNotification('Conversation cleared successfully');
+            this.showNotification('Conversation cleared successfully ✅');
         }
     }
 
     showNotification(message) {
-        // Simple notification (you can enhance this)
         const notification = document.createElement('div');
         notification.style.cssText = `
             position: fixed;
             top: 20px;
             right: 20px;
-            background: #1B3A5C;
+            background: #1e3a8a;
             color: white;
             padding: 15px 25px;
-            border-radius: 5px;
-            border-left: 4px solid #C8A951;
+            border-radius: 8px;
+            border-left: 4px solid #f59e0b;
             z-index: 10001;
             animation: slideIn 0.3s ease;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            font-family: 'Inter', 'Noto Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
         `;
         notification.textContent = message;
         document.body.appendChild(notification);
 
         setTimeout(() => {
-            notification.style.animation = 'slideOut 0.3s ease';
+            notification.style.animation = 'slideOut 0.3s ease forwards';
             setTimeout(() => notification.remove(), 300);
         }, 3000);
     }
@@ -296,7 +348,10 @@ class CollegeVirtualAssistant {
 // INITIALIZE ON PAGE LOAD
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
-    new CollegeVirtualAssistant();
+    // Small delay to ensure DOM is fully ready
+    setTimeout(() => {
+        new CollegeVirtualAssistant();
+    }, 100);
 });
 
 // ============================================
@@ -305,13 +360,25 @@ document.addEventListener('DOMContentLoaded', () => {
 const styleSheet = document.createElement('style');
 styleSheet.textContent = `
     @keyframes slideIn {
-        from { transform: translateX(100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
+        from { 
+            transform: translateX(100%); 
+            opacity: 0; 
+        }
+        to { 
+            transform: translateX(0); 
+            opacity: 1; 
+        }
     }
     
     @keyframes slideOut {
-        from { transform: translateX(0); opacity: 1; }
-        to { transform: translateX(100%); opacity: 0; }
+        from { 
+            transform: translateX(0); 
+            opacity: 1; 
+        }
+        to { 
+            transform: translateX(100%); 
+            opacity: 0; 
+        }
     }
 `;
 document.head.appendChild(styleSheet);
