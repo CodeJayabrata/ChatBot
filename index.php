@@ -520,7 +520,7 @@
             <!-- Footer -->
             <div class="chat-footer-text">
                 <i class="fas fa-shield-alt"></i> 
-                Official College Virtual Assistant | Powered by AI
+                Official College Virtual Assistant | Developed by Jayabrata
             </div>
         </div>
     </div>
