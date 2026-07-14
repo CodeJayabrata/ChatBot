@@ -225,7 +225,7 @@ function detectMessageType($message) {
         }
     }
     
-        // ============================================
+    // ============================================
     // CASUAL ACKNOWLEDGMENTS - EXPANDED
     // ============================================
     $casualPatterns = [

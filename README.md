@@ -1,4 +1,4 @@
-# AI-Based College Information Chatbot
+# College Information Chatbot
 
 ## Setup Instructions
 
@@ -47,5 +47,3 @@
 - Conversation history
 - Responsive design
 - Professional UI/UX
-
-### Project Structure
